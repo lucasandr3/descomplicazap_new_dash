@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Interfaces\Service;
+
+interface ExpenseServiceInterface
+{
+    public function allExpenses();
+
+    public function getExpense(int $expense);
+
+    public function getExpenseByCategory(int $category);
+
+    public function getTotalExpensesByCategory(int $category);
+
+    public function getInstallments(int $expense);
+
+    public function newExpense(object $resquest);
+
+    public function deleteExpense(int $expense);
+
+    public function editExpense(object $request, int $expense);
+}

@@ -1,0 +1,199 @@
+<?php
+
+namespace Utils;
+
+class Helpers
+{
+    public static function formatMoney(float $value, int $precision = 2): string
+    {
+        return "R$ " . number_format($value, $precision, ',','.');
+    }
+
+    public static function formatDateSimple(string $date): string
+    {
+        return $date = date('d/m/Y', strtotime($date));
+    }
+
+    public static function formatDateHour(string $date): string
+    {
+        $d = date('d/m/Y', strtotime($date));
+        $h = date('H:i', strtotime($date));
+
+        return $d ." às ".$h;
+    }
+
+    public static function Hour(string $date): string
+    {
+        return date('H:i', strtotime($date));
+    }
+
+    public static function formatInterest(float $value, int $precision = 1): string
+    {
+        return number_format($value, $precision, '.','.') . "%";
+    }
+
+    public static function formatDocument(string $value): string
+    {
+        $cnpj_cpf = preg_replace("/\D/", '', $value);
+        $result = $value;
+
+        if (strlen($cnpj_cpf) === 11) {
+            $result = preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cnpj_cpf);
+        } elseif (strlen($cnpj_cpf) === 14) {
+            $result = preg_replace("/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/", "\$1.\$2.\$3/\$4-\$5", $cnpj_cpf);
+        }
+
+        return $result;
+    }
+
+    public static function formatPhone(string $telefone): string
+    {
+        $size = strlen($telefone);
+        $string = preg_replace("[^0-9]", "", $telefone);
+
+        if ($size === 10) {
+            $string = '(' . substr($string, 0, 2) . ') ' . substr($string, 2, 4) . '-' . substr($string, 6);
+        } else if ($size === 11) {
+            $string = '(' . substr($string, 0, 2) . ') ' . substr($string, 2, 5) . '-' . substr($string, 7);
+        }
+        return $string;
+    }
+
+    public static function formatZipcode(string $cep): string
+    {
+        $string = preg_replace("[^0-9]", "", $cep);
+        return substr($string, 0, 5) . '-' . substr($string, 5, 3);
+    }
+
+    public static function groupByMonth($data)
+    {
+        $months = [
+            '1' => 'Janeiro',
+            '2' => 'Fevereiro',
+            '3' => 'Março',
+            '4' => 'Abril',
+            '5' => 'Maio',
+            '6' => 'Junho',
+            '7' => 'Julho',
+            '8' => 'Agosto',
+            '9' => 'Setembro',
+            '10' => 'Outubro',
+            '11' => 'Novembro',
+            '12' => 'Dezembro'
+        ];
+
+        usort($data, function($a, $b) {
+            return $a->month >= $b->month;
+        });
+
+        $dataMonths = [];
+
+        foreach ($data as $d) {
+            $dataMonths[$months[$d->month]][] = $d;
+        }
+
+        return $dataMonths;
+    }
+
+    public static function groupByCardsColumn($data)
+    {
+        usort($data, function ($a, $b) {
+            return $a->institution >= $b->institution;
+        });
+
+        $groupData = [];
+
+        foreach ($data as $k => $d) {
+            $groupData[self::cleanString($d->institution)][] = $d;
+        }
+
+        return $groupData;
+    }
+
+    public static function calcValues($values)
+    {
+        $total = 0;
+
+        foreach ($values as $index => $value) {
+            foreach ($values[$index] as $v) {
+                $total += $v->total;
+            }
+        }
+
+        return $total;
+    }
+
+    public static function cleanString($string = NULL)
+    {
+        $procurar = array('À', 'Á', 'Ã', 'Â', 'É', 'Ê', 'Í', 'Ó', 'Õ', 'Ô', 'Ú', 'Ü', 'Ç', 'à', 'á', 'ã', 'â', 'é', 'ê', 'í', 'ó', 'õ', 'ô', 'ú', 'ü', 'ç');
+        $substituir = array('a', 'a', 'a', 'a', 'e', 'r', 'i', 'o', 'o', 'o', 'u', 'u', 'c', 'a', 'a', 'a', 'a', 'e', 'e', 'i', 'o', 'o', 'o', 'u', 'u', 'c');
+        return str_replace($procurar, $substituir, strtolower(self::slugify($string)));
+    }
+
+    public static function slugify($text)
+    {
+        $replace = [
+            '&lt;' => '', '&gt;' => '', '&#039;' => '', '&amp;' => '',
+            '&quot;' => '', 'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'Ae',
+            '&Auml;' => 'A', 'Å' => 'A', 'Ā' => 'A', 'Ą' => 'A', 'Ă' => 'A', 'Æ' => 'Ae',
+            'Ç' => 'C', 'Ć' => 'C', 'Č' => 'C', 'Ĉ' => 'C', 'Ċ' => 'C', 'Ď' => 'D', 'Đ' => 'D',
+            'Ð' => 'D', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E', 'Ē' => 'E',
+            'Ę' => 'E', 'Ě' => 'E', 'Ĕ' => 'E', 'Ė' => 'E', 'Ĝ' => 'G', 'Ğ' => 'G',
+            'Ġ' => 'G', 'Ģ' => 'G', 'Ĥ' => 'H', 'Ħ' => 'H', 'Ì' => 'I', 'Í' => 'I',
+            'Î' => 'I', 'Ï' => 'I', 'Ī' => 'I', 'Ĩ' => 'I', 'Ĭ' => 'I', 'Į' => 'I',
+            'İ' => 'I', 'Ĳ' => 'IJ', 'Ĵ' => 'J', 'Ķ' => 'K', 'Ł' => 'K', 'Ľ' => 'K',
+            'Ĺ' => 'K', 'Ļ' => 'K', 'Ŀ' => 'K', 'Ñ' => 'N', 'Ń' => 'N', 'Ň' => 'N',
+            'Ņ' => 'N', 'Ŋ' => 'N', 'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O',
+            'Ö' => 'Oe', '&Ouml;' => 'Oe', 'Ø' => 'O', 'Ō' => 'O', 'Ő' => 'O', 'Ŏ' => 'O',
+            'Œ' => 'OE', 'Ŕ' => 'R', 'Ř' => 'R', 'Ŗ' => 'R', 'Ś' => 'S', 'Š' => 'S',
+            'Ş' => 'S', 'Ŝ' => 'S', 'Ș' => 'S', 'Ť' => 'T', 'Ţ' => 'T', 'Ŧ' => 'T',
+            'Ț' => 'T', 'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'Ue', 'Ū' => 'U',
+            '&Uuml;' => 'Ue', 'Ů' => 'U', 'Ű' => 'U', 'Ŭ' => 'U', 'Ũ' => 'U', 'Ų' => 'U',
+            'Ŵ' => 'W', 'Ý' => 'Y', 'Ŷ' => 'Y', 'Ÿ' => 'Y', 'Ź' => 'Z', 'Ž' => 'Z',
+            'Ż' => 'Z', 'Þ' => 'T', 'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a',
+            'ä' => 'ae', '&auml;' => 'ae', 'å' => 'a', 'ā' => 'a', 'ą' => 'a', 'ă' => 'a',
+            'æ' => 'ae', 'ç' => 'c', 'ć' => 'c', 'č' => 'c', 'ĉ' => 'c', 'ċ' => 'c',
+            'ď' => 'd', 'đ' => 'd', 'ð' => 'd', 'è' => 'e', 'é' => 'e', 'ê' => 'e',
+            'ë' => 'e', 'ē' => 'e', 'ę' => 'e', 'ě' => 'e', 'ĕ' => 'e', 'ė' => 'e',
+            'ƒ' => 'f', 'ĝ' => 'g', 'ğ' => 'g', 'ġ' => 'g', 'ģ' => 'g', 'ĥ' => 'h',
+            'ħ' => 'h', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i', 'ī' => 'i',
+            'ĩ' => 'i', 'ĭ' => 'i', 'į' => 'i', 'ı' => 'i', 'ĳ' => 'ij', 'ĵ' => 'j',
+            'ķ' => 'k', 'ĸ' => 'k', 'ł' => 'l', 'ľ' => 'l', 'ĺ' => 'l', 'ļ' => 'l',
+            'ŀ' => 'l', 'ñ' => 'n', 'ń' => 'n', 'ň' => 'n', 'ņ' => 'n', 'ŉ' => 'n',
+            'ŋ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'oe',
+            '&ouml;' => 'oe', 'ø' => 'o', 'ō' => 'o', 'ő' => 'o', 'ŏ' => 'o', 'œ' => 'oe',
+            'ŕ' => 'r', 'ř' => 'r', 'ŗ' => 'r', 'š' => 's', 'ù' => 'u', 'ú' => 'u',
+            'û' => 'u', 'ü' => 'ue', 'ū' => 'u', '&uuml;' => 'ue', 'ů' => 'u', 'ű' => 'u',
+            'ŭ' => 'u', 'ũ' => 'u', 'ų' => 'u', 'ŵ' => 'w', 'ý' => 'y', 'ÿ' => 'y',
+            'ŷ' => 'y', 'ž' => 'z', 'ż' => 'z', 'ź' => 'z', 'þ' => 't', 'ß' => 'ss',
+            'ſ' => 'ss', 'ый' => 'iy', 'А' => 'A', 'Б' => 'B', 'В' => 'V', 'Г' => 'G',
+            'Д' => 'D', 'Е' => 'E', 'Ё' => 'YO', 'Ж' => 'ZH', 'З' => 'Z', 'И' => 'I',
+            'Й' => 'Y', 'К' => 'K', 'Л' => 'L', 'М' => 'M', 'Н' => 'N', 'О' => 'O',
+            'П' => 'P', 'Р' => 'R', 'С' => 'S', 'Т' => 'T', 'У' => 'U', 'Ф' => 'F',
+            'Х' => 'H', 'Ц' => 'C', 'Ч' => 'CH', 'Ш' => 'SH', 'Щ' => 'SCH', 'Ъ' => '',
+            'Ы' => 'Y', 'Ь' => '', 'Э' => 'E', 'Ю' => 'YU', 'Я' => 'YA', 'а' => 'a',
+            'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd', 'е' => 'e', 'ё' => 'yo',
+            'ж' => 'zh', 'з' => 'z', 'и' => 'i', 'й' => 'y', 'к' => 'k', 'л' => 'l',
+            'м' => 'm', 'н' => 'n', 'о' => 'o', 'п' => 'p', 'р' => 'r', 'с' => 's',
+            'т' => 't', 'у' => 'u', 'ф' => 'f', 'х' => 'h', 'ц' => 'c', 'ч' => 'ch',
+            'ш' => 'sh', 'щ' => 'sch', 'ъ' => '', 'ы' => 'y', 'ь' => '', 'э' => 'e',
+            'ю' => 'yu', 'я' => 'ya'
+        ];
+
+        // make a human readable string
+        $text = strtr($text, $replace);
+
+        // replace non letter or digits by -
+        $text = preg_replace('~[^\\pL\d.]+~u', '_', $text);
+
+        // trim
+        $text = trim($text, '_');
+
+        // remove unwanted characters
+        $text = preg_replace('~[^-\w.]+~', '', $text);
+
+        $text = strtolower($text);
+
+        return $text;
+    }
+}
